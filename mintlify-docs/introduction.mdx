@@ -1,0 +1,124 @@
+---
+title: Introduction
+description: 'Welcome to the Smart Wallet Bridge API documentation'
+---
+
+## Welcome to Smart Wallet Bridge API
+
+The Smart Wallet Bridge API enables seamless cross-chain USDT transfers between Ethereum Sepolia and Base Sepolia testnets using LayerZero protocol and ERC-4337 smart wallets.
+
+<CardGroup cols={2}>
+  <Card
+    title="Quick Start"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Get started with your first bridge transaction in minutes
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference/introduction"
+  >
+    Explore all available endpoints and parameters
+  </Card>
+  <Card
+    title="Bridge Flow"
+    icon="arrow-right-arrow-left"
+    href="/development"
+  >
+    Understand how the bridging process works
+  </Card>
+  <Card
+    title="Faucet"
+    icon="faucet-drip"
+    href="/api-reference/endpoint/request-usdt"
+  >
+    Request testnet USDT for testing
+  </Card>
+</CardGroup>
+
+## What is Smart Wallet Bridge?
+
+Smart Wallet Bridge is a secure, automated cross-chain bridge that:
+
+- **Creates temporary smart wallets** for each bridge transaction
+- **Automatically detects deposits** and executes the bridge
+- **Uses LayerZero** for secure cross-chain messaging
+- **Supports ERC-4337** smart account infrastructure
+- **Auto-funds gas fees** for seamless user experience
+
+## Supported Networks
+
+<AccordionGroup>
+  <Accordion icon="ethereum" title="Ethereum Sepolia">
+    - **Chain ID**: 11155111
+    - **USDT Address**: `0x21dE5De8A2b4A7c0f8198ac240403Af7d093179e`
+    - **Bridge Address**: `0xcCDaC15b8E7C4Aa44b12B3acA6D8469B7a9F970a`
+    - **Explorer**: https://sepolia.etherscan.io
+  </Accordion>
+  
+  <Accordion icon="layer-group" title="Base Sepolia">
+    - **Chain ID**: 84532
+    - **USDT Address**: `0xFB8C2026977FB4f580D0021D76843325e724Fa04`
+    - **Bridge Address**: `0x41fFA79190fF1B2127FBf31B359B64392a026C58`
+    - **Explorer**: https://sepolia.basescan.org
+  </Accordion>
+</AccordionGroup>
+
+## Key Features
+
+<CardGroup cols={3}>
+  <Card title="Smart Wallets" icon="wallet">
+    Automated smart wallet creation using Coinbase CDP SDK
+  </Card>
+  <Card title="Auto-Execution" icon="bolt">
+    Automatic bridge execution upon deposit detection
+  </Card>
+  <Card title="Gas Management" icon="gas-pump">
+    Automatic ETH funding for transaction fees
+  </Card>
+  <Card title="Real-time Status" icon="chart-line">
+    Track your bridge transaction in real-time
+  </Card>
+  <Card title="Testnet Faucet" icon="droplet">
+    Built-in faucet for testnet USDT
+  </Card>
+  <Card title="LayerZero" icon="network-wired">
+    Secure cross-chain messaging protocol
+  </Card>
+</CardGroup>
+
+## How It Works
+
+1. **Create Bridge Request**: Call the `/bridge/create` endpoint with your parameters
+2. **Receive Deposit Address**: Get a unique smart wallet address for your transaction
+3. **Send USDT**: Transfer USDT to the provided deposit address
+4. **Auto-Execution**: The system detects your deposit and automatically:
+   - Funds the wallet with ETH for gas
+   - Approves USDT for the bridge contract
+   - Executes the cross-chain bridge transaction
+5. **Receive Funds**: Your USDT arrives on the destination chain
+
+<Note>
+  The entire process is automated after you send USDT to the deposit address!
+</Note>
+
+## Getting Support
+
+<CardGroup cols={2}>
+  <Card
+    title="Email Support"
+    icon="envelope"
+    href="mailto:support@yourdomain.com"
+  >
+    Reach out to our support team
+  </Card>
+  <Card
+    title="GitHub Issues"
+    icon="github"
+    href="https://github.com/yourusername/bridge-api/issues"
+  >
+    Report bugs or request features
+  </Card>
+</CardGroup>

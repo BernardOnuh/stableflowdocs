@@ -1,0 +1,8 @@
+{
+    "buildCommand": "npm install -g mintlify && mintlify build",
+    "outputDirectory": ".mintlify",
+    "framework": "mintlify",
+    "github": {
+      "silent": true
+    }
+  }

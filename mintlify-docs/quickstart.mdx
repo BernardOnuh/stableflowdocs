@@ -1,0 +1,251 @@
+---
+title: 'Quickstart'
+description: 'Start bridging USDT in under 5 minutes'
+---
+
+## Setup Your Environment
+
+Before you begin, make sure you have:
+
+<AccordionGroup>
+  <Accordion icon="terminal" title="Prerequisites">
+    - A wallet address on testnet
+    - Basic understanding of REST APIs
+    - `curl` or any HTTP client
+  </Accordion>
+</AccordionGroup>
+
+## Step 1: Get Testnet USDT
+
+First, you'll need some testnet USDT. Use our built-in faucet:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://stable-flow-backend.onrender.com/faucet/usdt \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "0xYourWalletAddress",
+    "chain": "base-sepolia",
+    "amount": "100"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://stable-flow-backend.onrender.com/faucet/usdt', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    address: '0xYourWalletAddress',
+    chain: 'base-sepolia',
+    amount: '100'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://stable-flow-backend.onrender.com/faucet/usdt',
+    json={
+        'address': '0xYourWalletAddress',
+        'chain': 'base-sepolia',
+        'amount': '100'
+    }
+)
+
+print(response.json())
+```
+
+</CodeGroup>
+
+<Tip>
+  You'll receive 100 USDT on Base Sepolia testnet. This usually takes 10-30 seconds.
+</Tip>
+
+## Step 2: Create a Bridge Request
+
+Create a bridge request to transfer USDT from Base Sepolia to Ethereum Sepolia:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://stable-flow-backend.onrender.com/bridge/create \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sourceChain": "base-sepolia",
+    "destinationChain": "sepolia",
+    "amountUSDT": "10",
+    "destinationWallet": "0xYourDestinationAddress"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://stable-flow-backend.onrender.com/bridge/create', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    sourceChain: 'base-sepolia',
+    destinationChain: 'sepolia',
+    amountUSDT: '10',
+    destinationWallet: '0xYourDestinationAddress'
+  })
+});
+
+const data = await response.json();
+console.log('Session ID:', data.sessionId);
+console.log('Deposit Address:', data.depositAddress);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://stable-flow-backend.onrender.com/bridge/create',
+    json={
+        'sourceChain': 'base-sepolia',
+        'destinationChain': 'sepolia',
+        'amountUSDT': '10',
+        'destinationWallet': '0xYourDestinationAddress'
+    }
+)
+
+data = response.json()
+print(f"Session ID: {data['sessionId']}")
+print(f"Deposit Address: {data['depositAddress']}")
+```
+
+</CodeGroup>
+
+**Response:**
+```json
+{
+  "success": true,
+  "sessionId": "bridge_1234567890_abc123",
+  "depositAddress": "0x1234...5678",
+  "smartWalletAddress": "0x1234...5678",
+  "sourceChain": "base-sepolia",
+  "destinationChain": "sepolia",
+  "amountUSDT": "10",
+  "destinationWallet": "0xYourDestinationAddress",
+  "message": "Send 10 USDT to 0x1234...5678 on base-sepolia",
+  "instructions": {
+    "step1": "Send 10 USDT to the deposit address",
+    "step2": "Bridge will execute automatically after deposit is detected",
+    "step3": "Funds will arrive at 0xYourDestinationAddress on sepolia"
+  }
+}
+```
+
+## Step 3: Send USDT to Deposit Address
+
+Transfer the exact amount of USDT to the provided deposit address on the source chain.
+
+<Warning>
+  Make sure to send the **exact amount** specified in the request, on the **correct chain**!
+</Warning>
+
+## Step 4: Monitor Progress
+
+Check the status of your bridge transaction:
+
+<CodeGroup>
+
+```bash cURL
+curl https://stable-flow-backend.onrender.com/bridge/status/bridge_1234567890_abc123
+```
+
+```javascript JavaScript
+const sessionId = 'bridge_1234567890_abc123';
+const response = await fetch(`https://stable-flow-backend.onrender.com/bridge/status/${sessionId}`);
+const status = await response.json();
+console.log(status);
+```
+
+```python Python
+import requests
+
+session_id = 'bridge_1234567890_abc123'
+response = requests.get(f'https://stable-flow-backend.onrender.com/bridge/status/{session_id}')
+print(response.json())
+```
+
+</CodeGroup>
+
+**Status Response:**
+```json
+{
+  "sessionId": "bridge_1234567890_abc123",
+  "status": "completed",
+  "sourceChain": "base-sepolia",
+  "destinationChain": "sepolia",
+  "amountUSDT": "10",
+  "destinationWallet": "0xYourDestinationAddress",
+  "depositAddress": "0x1234...5678",
+  "createdAt": "2025-01-15T10:30:00.000Z",
+  "txHash": "0xabc...def",
+  "explorerUrl": "https://sepolia.basescan.org/tx/0xabc...def",
+  "layerZeroUrl": "https://testnet.layerzeroscan.com/tx/0xabc...def"
+}
+```
+
+## Status Types
+
+<ResponseField name="pending_deposit" type="string">
+  Waiting for USDT deposit to the smart wallet
+</ResponseField>
+
+<ResponseField name="processing" type="string">
+  USDT received, executing bridge transaction
+</ResponseField>
+
+<ResponseField name="completed" type="string">
+  Bridge transaction successful! Check the explorer URLs
+</ResponseField>
+
+<ResponseField name="failed" type="string">
+  Transaction failed. Check the error field for details
+</ResponseField>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="API Reference"
+    icon="book"
+    href="/api-reference/introduction"
+  >
+    Explore all API endpoints and parameters
+  </Card>
+  <Card
+    title="Development Guide"
+    icon="code"
+    href="/development"
+  >
+    Learn about the bridge architecture
+  </Card>
+</CardGroup>
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion title="Bridge timeout after 20 minutes">
+    If no USDT deposit is detected within 20 minutes, the session will timeout. Create a new bridge request and send USDT promptly.
+  </Accordion>
+  
+  <Accordion title="Wrong amount sent">
+    The bridge expects the exact amount specified. If you send a different amount, create a new bridge request with the correct amount.
+  </Accordion>
+  
+  <Accordion title="Sent on wrong chain">
+    Double-check you're sending USDT on the source chain specified in your bridge request.
+  </Accordion>
+</AccordionGroup>

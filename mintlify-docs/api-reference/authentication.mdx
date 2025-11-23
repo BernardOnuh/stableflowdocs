@@ -1,0 +1,434 @@
+---
+title: 'Authentication'
+description: 'Learn about API authentication and security'
+---
+
+## Current Authentication
+
+<Warning>
+  The Smart Wallet Bridge API currently does **not require authentication**. All endpoints are publicly accessible.
+</Warning>
+
+This is acceptable for testnet environments and development, but **authentication should be implemented for production use**.
+
+## Production Authentication Recommendations
+
+For production deployment, consider implementing one or more of these authentication methods:
+
+### 1. API Key Authentication
+
+The simplest form of authentication:
+
+```typescript
+// Middleware example
+app.use((req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  
+  if (!apiKey || !isValidApiKey(apiKey)) {
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Invalid or missing API key'
+    });
+  }
+  
+  next();
+});
+```
+
+**Usage:**
+```bash
+curl -H "X-API-Key: your-api-key-here" \
+  https://stable-flow-backend.onrender.com/bridge/create
+```
+
+<AccordionGroup>
+  <Accordion title="Pros" icon="thumbs-up">
+    - Simple to implement
+    - Easy for clients to use
+    - Good for server-to-server communication
+  </Accordion>
+  
+  <Accordion title="Cons" icon="thumbs-down">
+    - Keys can be leaked if not handled carefully
+    - No built-in expiration
+    - Requires key rotation strategy
+  </Accordion>
+</AccordionGroup>
+
+### 2. JWT (JSON Web Tokens)
+
+More sophisticated token-based authentication:
+
+```typescript
+import jwt from 'jsonwebtoken';
+
+// Generate token
+function generateToken(userId: string) {
+  return jwt.sign(
+    { userId, scope: 'bridge:create' },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+}
+
+// Verify middleware
+function verifyToken(req, res, next) {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+}
+```
+
+**Usage:**
+```bash
+# Get token first
+TOKEN=$(curl -X POST https://stable-flow-backend.onrender.com/auth/login \
+  -d '{"username":"user","password":"pass"}' | jq -r '.token')
+
+# Use token in requests
+curl -H "Authorization: Bearer $TOKEN" \
+  https://stable-flow-backend.onrender.com/bridge/create
+```
+
+<AccordionGroup>
+  <Accordion title="Pros" icon="thumbs-up">
+    - Stateless authentication
+    - Built-in expiration
+    - Can include user metadata in token
+    - Industry standard
+  </Accordion>
+  
+  <Accordion title="Cons" icon="thumbs-down">
+    - More complex to implement
+    - Need token refresh mechanism
+    - Requires secure secret management
+  </Accordion>
+</AccordionGroup>
+
+### 3. OAuth 2.0
+
+Enterprise-grade authentication:
+
+```typescript
+// Using passport.js
+import passport from 'passport';
+import { Strategy as OAuth2Strategy } from 'passport-oauth2';
+
+passport.use(new OAuth2Strategy({
+    authorizationURL: 'https://provider.com/oauth2/authorize',
+    tokenURL: 'https://provider.com/oauth2/token',
+    clientID: process.env.OAUTH_CLIENT_ID,
+    clientSecret: process.env.OAUTH_CLIENT_SECRET,
+    callbackURL: 'https://stable-flow-backend.onrender.com/auth/callback'
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    // Verify user
+    return cb(null, profile);
+  }
+));
+```
+
+<AccordionGroup>
+  <Accordion title="Pros" icon="thumbs-up">
+    - Industry standard
+    - Delegated authentication
+    - Fine-grained permissions
+    - Works with existing identity providers
+  </Accordion>
+  
+  <Accordion title="Cons" icon="thumbs-down">
+    - Complex to implement
+    - Requires external OAuth provider
+    - Overkill for simple use cases
+  </Accordion>
+</AccordionGroup>
+
+### 4. Wallet Signature Verification
+
+Blockchain-native authentication using wallet signatures:
+
+```typescript
+import { verifyMessage } from 'viem';
+
+async function verifyWalletSignature(req, res, next) {
+  const { address, message, signature } = req.body;
+  
+  // Verify the message was signed by the claimed address
+  const isValid = await verifyMessage({
+    address: address as `0x${string}`,
+    message,
+    signature: signature as `0x${string}`,
+  });
+  
+  if (!isValid) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+  
+  // Check message timestamp to prevent replay attacks
+  const timestamp = extractTimestamp(message);
+  if (Date.now() - timestamp > 300000) { // 5 minutes
+    return res.status(401).json({ error: 'Signature expired' });
+  }
+  
+  req.user = { address };
+  next();
+}
+```
+
+**Usage:**
+```javascript
+// Client-side: Sign message with wallet
+const message = `Sign this message to authenticate: ${Date.now()}`;
+const signature = await walletClient.signMessage({ message });
+
+// Send to API
+await fetch('https://stable-flow-backend.onrender.com/bridge/create', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    address: userAddress,
+    message,
+    signature,
+    // ... bridge parameters
+  })
+});
+```
+
+<AccordionGroup>
+  <Accordion title="Pros" icon="thumbs-up">
+    - No passwords needed
+    - User owns their keys
+    - Perfect for Web3 applications
+    - No centralized authentication server
+  </Accordion>
+  
+  <Accordion title="Cons" icon="thumbs-down">
+    - Requires wallet integration
+    - Users need to sign for each request (or use sessions)
+    - Not suitable for non-Web3 clients
+  </Accordion>
+</AccordionGroup>
+
+## Rate Limiting
+
+Regardless of authentication method, implement rate limiting:
+
+```typescript
+import rateLimit from 'express-rate-limit';
+
+// Global rate limit
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window
+  message: 'Too many requests, please try again later'
+});
+
+// Endpoint-specific limits
+const bridgeCreateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // 10 bridge requests per hour
+  message: 'Too many bridge requests, please try again later'
+});
+
+app.use(globalLimiter);
+app.post('/bridge/create', bridgeCreateLimiter, async (req, res) => {
+  // Handle bridge creation
+});
+```
+
+## CORS Configuration
+
+Properly configure CORS for production:
+
+```typescript
+import cors from 'cors';
+
+// Development: Allow all
+app.use(cors());
+
+// Production: Whitelist specific origins
+app.use(cors({
+  origin: [
+    'https://yourdomain.com',
+    'https://app.yourdomain.com'
+  ],
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+```
+
+## Security Headers
+
+Add security headers using Helmet:
+
+```typescript
+import helmet from 'helmet';
+
+app.use(helmet());
+```
+
+## Input Validation
+
+Always validate and sanitize inputs:
+
+```typescript
+import { body, validationResult } from 'express-validator';
+
+app.post('/bridge/create',
+  [
+    body('sourceChain').isIn(['sepolia', 'base-sepolia']),
+    body('destinationChain').isIn(['sepolia', 'base-sepolia']),
+    body('amountUSDT').isNumeric(),
+    body('destinationWallet').matches(/^0x[a-fA-F0-9]{40}$/),
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
+    // Process request
+  }
+);
+```
+
+## Recommended Production Setup
+
+For a production deployment, implement:
+
+<Steps>
+  <Step title="API Key or JWT Authentication">
+    Choose based on your use case and client types
+  </Step>
+  
+  <Step title="Rate Limiting">
+    Protect against abuse and DoS attacks
+    - Global: 100 req/15min
+    - Bridge creation: 10 req/hour
+    - Faucet: 1 req/day per address
+  </Step>
+  
+  <Step title="CORS Whitelist">
+    Only allow requests from your frontend domains
+  </Step>
+  
+  <Step title="HTTPS Only">
+    Never run production API over HTTP
+  </Step>
+  
+  <Step title="Input Validation">
+    Validate all inputs before processing
+  </Step>
+  
+  <Step title="Security Headers">
+    Use Helmet.js for security headers
+  </Step>
+  
+  <Step title="Logging & Monitoring">
+    Log all authentication attempts and failed requests
+  </Step>
+</Steps>
+
+## Example: Complete Auth Implementation
+
+Here's a complete example with JWT authentication:
+
+```typescript
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import rateLimit from 'express-rate-limit';
+
+const app = express();
+app.use(express.json());
+
+// Rate limiters
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many authentication attempts'
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+
+// Mock user database (use real database in production)
+const users = new Map();
+
+// Register endpoint
+app.post('/auth/register', authLimiter, async (req, res) => {
+  const { username, password } = req.body;
+  
+  if (users.has(username)) {
+    return res.status(400).json({ error: 'User already exists' });
+  }
+  
+  const hashedPassword = await bcrypt.hash(password, 10);
+  users.set(username, { username, password: hashedPassword });
+  
+  res.json({ success: true, message: 'User registered' });
+});
+
+// Login endpoint
+app.post('/auth/login', authLimiter, async (req, res) => {
+  const { username, password } = req.body;
+  
+  const user = users.get(username);
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  
+  const validPassword = await bcrypt.compare(password, user.password);
+  if (!validPassword) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  
+  const token = jwt.sign(
+    { username },
+    process.env.JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+  
+  res.json({ token });
+});
+
+// Auth middleware
+function authenticateToken(req, res, next) {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  
+  try {
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = user;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+}
+
+// Protected routes
+app.use('/bridge', apiLimiter, authenticateToken);
+app.post('/bridge/create', async (req, res) => {
+  // Bridge creation logic (user is authenticated)
+  res.json({ success: true, user: req.user.username });
+});
+```
+
+<Note>
+  Remember to set strong `JWT_SECRET` in your environment variables and never commit it to version control!
+</Note>

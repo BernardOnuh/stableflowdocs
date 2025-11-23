@@ -1,0 +1,361 @@
+---
+title: 'Request USDT'
+api: 'POST /faucet/usdt'
+description: 'Request testnet USDT from the faucet'
+---
+
+## Overview
+
+Request testnet USDT to be sent to any address on Sepolia or Base Sepolia. Useful for testing the bridge functionality.
+
+<Note>
+  This faucet sends real testnet USDT tokens. The faucet wallet must have sufficient USDT balance to fulfill requests.
+</Note>
+
+## Request Body
+
+<ParamField body="address" type="string" required>
+  The wallet address that will receive USDT. Must be a valid Ethereum address.
+</ParamField>
+
+<ParamField body="chain" type="string" required>
+  The blockchain network where USDT will be sent. Must be either `sepolia` or `base-sepolia`.
+</ParamField>
+
+<ParamField body="amount" type="string" default="10">
+  Amount of USDT to send (in decimal format). Defaults to "10" if not specified.
+</ParamField>
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Indicates if the request was successful
+</ResponseField>
+
+<ResponseField name="txHash" type="string">
+  Transaction hash of the USDT transfer
+</ResponseField>
+
+<ResponseField name="recipient" type="string">
+  The address that received USDT
+</ResponseField>
+
+<ResponseField name="chain" type="string">
+  The chain where USDT was sent
+</ResponseField>
+
+<ResponseField name="amount" type="string">
+  Amount of USDT sent
+</ResponseField>
+
+<ResponseField name="usdtToken" type="string">
+  Address of the USDT token contract
+</ResponseField>
+
+<ResponseField name="explorerUrl" type="string">
+  Block explorer URL for the transaction
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Success message
+</ResponseField>
+
+<ResponseField name="blockNumber" type="string">
+  Block number where the transaction was confirmed
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl -X POST https://stable-flow-backend.onrender.com/faucet/usdt \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "0x22890dfAeD0667723fcD66e34FfB853b4F81f6bd",
+    "chain": "base-sepolia",
+    "amount": "100"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://stable-flow-backend.onrender.com/faucet/usdt', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    address: '0x22890dfAeD0667723fcD66e34FfB853b4F81f6bd',
+    chain: 'base-sepolia',
+    amount: '100'
+  })
+});
+
+const data = await response.json();
+console.log('USDT sent!', data.txHash);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://stable-flow-backend.onrender.com/faucet/usdt',
+    json={
+        'address': '0x22890dfAeD0667723fcD66e34FfB853b4F81f6bd',
+        'chain': 'base-sepolia',
+        'amount': '100'
+    }
+)
+
+data = response.json()
+print(f"USDT sent! TX: {data['txHash']}")
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Success Response
+{
+  "success": true,
+  "txHash": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+  "recipient": "0x22890dfAeD0667723fcD66e34FfB853b4F81f6bd",
+  "chain": "base-sepolia",
+  "amount": "100",
+  "usdtToken": "0xFB8C2026977FB4f580D0021D76843325e724Fa04",
+  "explorerUrl": "https://sepolia.basescan.org/tx/0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+  "message": "Successfully sent 100 USDT to 0x22890dfAeD0667723fcD66e34FfB853b4F81f6bd on base-sepolia",
+  "blockNumber": "12345678"
+}
+```
+
+```json Error - Missing Fields
+{
+  "error": "Missing required fields",
+  "required": [
+    "address",
+    "chain"
+  ],
+  "optional": [
+    "amount (default: 10)"
+  ],
+  "received": {
+    "address": "0x22890dfAeD0667723fcD66e34FfB853b4F81f6bd"
+  }
+}
+```
+
+```json Error - Invalid Chain
+{
+  "error": "Invalid chain. Use 'sepolia' or 'base-sepolia'"
+}
+```
+
+```json Error - Insufficient Faucet Balance
+{
+  "error": "Insufficient faucet balance",
+  "message": "Faucet has 50 USDT, but 100 USDT was requested",
+  "faucetBalance": "50"
+}
+```
+
+```json Error - Faucet Not Configured
+{
+  "error": "Faucet not configured",
+  "message": "CUSTOMWALLET environment variable not set"
+}
+```
+
+</ResponseExample>
+
+## Usage Examples
+
+### Request Default Amount (10 USDT)
+
+```bash
+curl -X POST https://stable-flow-backend.onrender.com/faucet/usdt \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": "0x22890dfAeD0667723fcD66e34FfB853b4F81f6bd",
+    "chain": "base-sepolia"
+  }'
+```
+
+### Request Custom Amount
+
+```javascript
+async function requestUSDT(address, chain, amount) {
+  const response = await fetch('https://stable-flow-backend.onrender.com/faucet/usdt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ address, chain, amount })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || error.error);
+  }
+  
+  return await response.json();
+}
+
+// Request 50 USDT on Sepolia
+try {
+  const result = await requestUSDT(
+    '0x22890dfAeD0667723fcD66e34FfB853b4F81f6bd',
+    'sepolia',
+    '50'
+  );
+  console.log('Success!', result.explorerUrl);
+} catch (error) {
+  console.error('Failed:', error.message);
+}
+```
+
+### Wait for Confirmation
+
+```python
+import requests
+import time
+
+def request_and_wait_usdt(address, chain, amount='10'):
+    # Request USDT
+    response = requests.post(
+        'https://stable-flow-backend.onrender.com/faucet/usdt',
+        json={'address': address, 'chain': chain, 'amount': amount}
+    )
+    
+    if response.status_code != 200:
+        raise Exception(response.json().get('message', 'Faucet request failed'))
+    
+    data = response.json()
+    print(f"USDT requested! TX Hash: {data['txHash']}")
+    print(f"Explorer: {data['explorerUrl']}")
+    
+    # Transaction is already confirmed by the API
+    print(f"Confirmed in block: {data['blockNumber']}")
+    return data
+
+# Usage
+result = request_and_wait_usdt(
+    '0x22890dfAeD0667723fcD66e34FfB853b4F81f6bd',
+    'base-sepolia',
+    '100'
+)
+```
+
+## USDT Token Addresses
+
+<CardGroup cols={2}>
+  <Card title="Ethereum Sepolia" icon="ethereum">
+    `0x21dE5De8A2b4A7c0f8198ac240403Af7d093179e`
+  </Card>
+  <Card title="Base Sepolia" icon="layer-group">
+    `0xFB8C2026977FB4f580D0021D76843325e724Fa04`
+  </Card>
+</CardGroup>
+
+## Rate Limiting
+
+<Warning>
+  Currently, there is no rate limiting on the faucet. For production:
+  - Implement rate limiting per address
+  - Add CAPTCHA or proof-of-work
+  - Monitor faucet balance and set alerts
+  - Consider maximum amounts per request
+</Warning>
+
+## Faucet Balance
+
+The faucet uses a funded wallet to send USDT. To check the current faucet balance, contact the API administrator or implement a balance check endpoint.
+
+### Refilling the Faucet
+
+If you're running your own instance and the faucet runs out of USDT:
+
+1. Get the faucet wallet address from the `CUSTOMWALLET` environment variable
+2. Send USDT to that address on the desired testnet
+3. The faucet will automatically have the new balance available
+
+## Common Use Cases
+
+### Testing Bridge Flow
+
+```javascript
+// 1. Request USDT on source chain
+const faucetResult = await fetch('https://stable-flow-backend.onrender.com/faucet/usdt', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    address: myWalletAddress,
+    chain: 'base-sepolia',
+    amount: '100'
+  })
+});
+
+console.log('USDT received:', (await faucetResult.json()).txHash);
+
+// 2. Create bridge request
+const bridgeResult = await fetch('https://stable-flow-backend.onrender.com/bridge/create', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    sourceChain: 'base-sepolia',
+    destinationChain: 'sepolia',
+    amountUSDT: '50',
+    destinationWallet: myWalletAddress
+  })
+});
+
+const bridge = await bridgeResult.json();
+console.log('Bridge created:', bridge.sessionId);
+console.log('Send USDT to:', bridge.depositAddress);
+```
+
+### Funding Multiple Wallets
+
+```python
+import requests
+
+wallets = [
+    '0x1111111111111111111111111111111111111111',
+    '0x2222222222222222222222222222222222222222',
+    '0x3333333333333333333333333333333333333333'
+]
+
+for wallet in wallets:
+    response = requests.post(
+        'https://stable-flow-backend.onrender.com/faucet/usdt',
+        json={
+            'address': wallet,
+            'chain': 'base-sepolia',
+            'amount': '50'
+        }
+    )
+    
+    if response.status_code == 200:
+        print(f"✅ Sent 50 USDT to {wallet}")
+    else:
+        print(f"❌ Failed for {wallet}: {response.json()}")
+```
+
+## Important Notes
+
+<Note>
+  - The faucet sends the USDT immediately and waits for confirmation before responding
+  - Typical response time: 10-30 seconds (including blockchain confirmation)
+  - The transaction is already confirmed when you receive the response
+</Note>
+
+<Tip>
+  When testing the bridge, request slightly more USDT than you plan to bridge to account for fees:
+  - Request 110 USDT if you want to bridge 100 USDT
+  - Extra USDT covers LP fees and protocol fees
+</Tip>
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Faucet balance too low | Contact admin to refill or use a different testnet faucet |
+| Transaction slow | Testnet may be congested; wait a bit longer |
+| Invalid address error | Ensure you're using a valid Ethereum address (0x...) |
+| Wrong chain | Double-check you're requesting USDT on the correct testnet |

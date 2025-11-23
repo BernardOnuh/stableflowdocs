@@ -1,0 +1,456 @@
+---
+title: 'Errors'
+description: 'Understanding API error responses and how to handle them'
+---
+
+## Error Response Format
+
+All API errors follow a consistent JSON format:
+
+```json
+{
+  "error": "Error title or type",
+  "message": "Detailed error message with context"
+}
+```
+
+Some errors may include additional fields:
+
+```json
+{
+  "error": "Validation error",
+  "message": "Invalid input parameters",
+  "details": {
+    "field": "sourceChain",
+    "issue": "Must be 'sepolia' or 'base-sepolia'"
+  }
+}
+```
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes:
+
+| Status Code | Meaning | When It Occurs |
+|-------------|---------|----------------|
+| 200 | OK | Successful request |
+| 400 | Bad Request | Invalid parameters or malformed request |
+| 404 | Not Found | Resource doesn't exist (e.g., invalid session ID) |
+| 500 | Internal Server Error | Server-side error during processing |
+
+## Common Errors
+
+### Bridge Creation Errors
+
+#### Missing Required Fields
+
+```json
+{
+  "error": "Missing required fields",
+  "required": [
+    "sourceChain",
+    "destinationChain",
+    "amountUSDT",
+    "destinationWallet"
+  ],
+  "received": {
+    "sourceChain": "base-sepolia"
+  }
+}
+```
+
+**Cause:** One or more required fields missing from request body
+
+**Solution:** Include all required fields in your request
+
+**Example Fix:**
+```javascript
+// ❌ Wrong
+fetch('/bridge/create', {
+  method: 'POST',
+  body: JSON.stringify({ sourceChain: 'base-sepolia' })
+});
+
+// ✅ Correct
+fetch('/bridge/create', {
+  method: 'POST',
+  body: JSON.stringify({
+    sourceChain: 'base-sepolia',
+    destinationChain: 'sepolia',
+    amountUSDT: '10',
+    destinationWallet: '0x...'
+  })
+});
+```
+
+#### Invalid Chain
+
+```json
+{
+  "error": "Invalid chain. Use 'sepolia' or 'base-sepolia'"
+}
+```
+
+**Cause:** Specified an unsupported blockchain network
+
+**Solution:** Use only `sepolia` or `base-sepolia`
+
+#### Same Source and Destination
+
+```json
+{
+  "error": "Source and destination chains must be different"
+}
+```
+
+**Cause:** Trying to bridge USDT to the same chain
+
+**Solution:** Choose different source and destination chains
+
+### Faucet Errors
+
+#### Insufficient Faucet Balance
+
+```json
+{
+  "error": "Insufficient faucet balance",
+  "message": "Faucet has 50 USDT, but 100 USDT was requested",
+  "faucetBalance": "50"
+}
+```
+
+**Cause:** Faucet wallet doesn't have enough USDT
+
+**Solution:**
+- Request a smaller amount
+- Contact administrator to refill faucet
+- Use an alternative testnet faucet
+
+#### Faucet Not Configured
+
+```json
+{
+  "error": "Faucet not configured",
+  "message": "CUSTOMWALLET environment variable not set"
+}
+```
+
+**Cause:** Server not configured with funding wallet
+
+**Solution:** Administrator needs to set `CUSTOMWALLET` environment variable
+
+### Session Errors
+
+#### Session Not Found
+
+```json
+{
+  "error": "Session not found"
+}
+```
+
+**Cause:** Requested a session ID that doesn't exist
+
+**Solution:**
+- Verify the session ID is correct
+- Check if server was restarted (sessions are stored in memory)
+- Create a new bridge request
+
+### Processing Errors
+
+#### Timeout Waiting for USDT
+
+```json
+{
+  "error": "Timeout waiting for USDT deposit"
+}
+```
+
+**Cause:** No USDT received within 20 minutes
+
+**Solution:**
+- Create a new bridge request
+- Send USDT promptly after creating the request
+- Verify you sent to the correct address and correct chain
+
+#### Insufficient ETH After Funding
+
+```json
+{
+  "error": "Insufficient ETH after funding. Have 0.001 ETH, need 0.005 ETH"
+}
+```
+
+**Cause:** Funding wallet doesn't have enough ETH
+
+**Solution:**
+- Administrator needs to top up the funding wallet
+- Wait and retry (temporary network congestion)
+
+#### Transaction Failed
+
+```json
+{
+  "error": "Transaction failed: reverted"
+}
+```
+
+**Cause:** Bridge transaction reverted on-chain
+
+**Common Reasons:**
+- Insufficient USDT balance
+- Bridge contract issue
+- LayerZero network issue
+
+**Solution:**
+- Check the transaction on block explorer
+- Verify USDT balance was sufficient
+- Retry with a new bridge request
+- Check LayerZero status
+
+## Error Handling Best Practices
+
+### 1. Always Check Response Status
+
+```javascript
+async function createBridge(params) {
+  const response = await fetch('https://stable-flow-backend.onrender.com/bridge/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params)
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || error.error);
+  }
+  
+  return await response.json();
+}
+```
+
+### 2. Implement Retry Logic
+
+```javascript
+async function bridgeWithRetry(params, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await createBridge(params);
+    } catch (error) {
+      // Don't retry on 400 errors (client errors)
+      if (error.status === 400) {
+        throw error;
+      }
+      
+      // Retry on 500 errors (server errors)
+      if (i === maxRetries - 1) {
+        throw error;
+      }
+      
+      // Exponential backoff
+      await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
+    }
+  }
+}
+```
+
+### 3. Validate Before Sending
+
+```javascript
+function validateBridgeParams(params) {
+  const errors = [];
+  
+  if (!['sepolia', 'base-sepolia'].includes(params.sourceChain)) {
+    errors.push('Invalid sourceChain');
+  }
+  
+  if (!['sepolia', 'base-sepolia'].includes(params.destinationChain)) {
+    errors.push('Invalid destinationChain');
+  }
+  
+  if (params.sourceChain === params.destinationChain) {
+    errors.push('Source and destination must be different');
+  }
+  
+  if (!/^0x[a-fA-F0-9]{40}$/.test(params.destinationWallet)) {
+    errors.push('Invalid wallet address');
+  }
+  
+  if (parseFloat(params.amountUSDT) <= 0) {
+    errors.push('Amount must be positive');
+  }
+  
+  return errors;
+}
+
+// Usage
+const errors = validateBridgeParams(params);
+if (errors.length > 0) {
+  console.error('Validation errors:', errors);
+  return;
+}
+```
+
+### 4. User-Friendly Error Messages
+
+```javascript
+function getUserFriendlyError(error) {
+  const errorMap = {
+    'Session not found': 'This bridge request expired or doesn\'t exist. Please create a new one.',
+    'Timeout waiting for USDT deposit': 'We didn\'t receive your USDT within 20 minutes. Please create a new bridge request.',
+    'Insufficient faucet balance': 'The faucet is currently empty. Please try again later.',
+    'Invalid chain': 'Please select either Sepolia or Base Sepolia.',
+    'Source and destination chains must be different': 'You can\'t bridge to the same network.',
+  };
+  
+  return errorMap[error.error] || error.message || 'An unexpected error occurred';
+}
+
+// Usage in UI
+try {
+  await createBridge(params);
+} catch (error) {
+  const userMessage = getUserFriendlyError(error);
+  showErrorToast(userMessage);
+}
+```
+
+## Debugging Errors
+
+### Enable Verbose Logging
+
+Check server logs for more details:
+
+```bash
+# Server logs show detailed error information
+[bridge_1234567890_abc] ❌ Error: Insufficient USDT: have 5.000000, need 10.000000
+```
+
+### Check Transaction on Block Explorer
+
+For failed bridge transactions:
+
+1. Get the transaction hash from error details (if available)
+2. Check on block explorer:
+   - Base Sepolia: https://sepolia.basescan.org/tx/{txHash}
+   - Sepolia: https://sepolia.etherscan.io/tx/{txHash}
+3. Look for revert reason in the transaction details
+
+### Verify Smart Wallet Balance
+
+```javascript
+// Check ETH balance
+const ethBalance = await publicClient.getBalance({
+  address: depositAddress
+});
+console.log('ETH:', formatUnits(ethBalance, 18));
+
+// Check USDT balance
+const usdtBalance = await publicClient.readContract({
+  address: usdtTokenAddress,
+  abi: ERC20_ABI,
+  functionName: 'balanceOf',
+  args: [depositAddress]
+});
+console.log('USDT:', formatUnits(usdtBalance, 6));
+```
+
+## Error Recovery Strategies
+
+<AccordionGroup>
+  <Accordion title="Session Timeout" icon="clock">
+    **Problem:** Bridge request timed out waiting for USDT
+    
+    **Recovery:**
+    1. Create a new bridge request
+    2. Send USDT immediately (within 20 minutes)
+    3. Monitor status actively
+  </Accordion>
+  
+  <Accordion title="Insufficient Funding" icon="wallet">
+    **Problem:** Funding wallet out of ETH or USDT
+    
+    **Recovery:**
+    1. Contact administrator to refill funding wallet
+    2. Wait for refill to complete
+    3. Retry failed bridge request (if applicable)
+  </Accordion>
+  
+  <Accordion title="Network Congestion" icon="signal">
+    **Problem:** High gas prices or slow confirmation times
+    
+    **Recovery:**
+    1. Wait for network congestion to clear
+    2. Retry during off-peak hours
+    3. Increase timeout values if possible
+  </Accordion>
+  
+  <Accordion title="Smart Contract Error" icon="file-contract">
+    **Problem:** Bridge contract reverted transaction
+    
+    **Recovery:**
+    1. Check LayerZero status
+    2. Verify bridge contract is functional
+    3. Try bridging a small amount first
+    4. Contact support if issue persists
+  </Accordion>
+</AccordionGroup>
+
+## Error Monitoring
+
+### Set Up Alerts
+
+```javascript
+// Example error tracking
+class ErrorTracker {
+  constructor() {
+    this.errors = [];
+  }
+  
+  track(error, context) {
+    this.errors.push({
+      timestamp: new Date(),
+      error: error.message,
+      context,
+      stack: error.stack
+    });
+    
+    // Alert if too many errors
+    const recentErrors = this.errors.filter(
+      e => Date.now() - e.timestamp < 3600000 // Last hour
+    );
+    
+    if (recentErrors.length > 10) {
+      this.sendAlert('High error rate detected');
+    }
+  }
+  
+  sendAlert(message) {
+    // Send to monitoring service
+    console.error('ALERT:', message);
+  }
+}
+
+const tracker = new ErrorTracker();
+
+// Use in error handlers
+try {
+  await createBridge(params);
+} catch (error) {
+  tracker.track(error, { params, endpoint: '/bridge/create' });
+  throw error;
+}
+```
+
+## Need Help?
+
+If you're experiencing errors that aren't documented here:
+
+1. Check the server logs for detailed error information
+2. Verify your request parameters match the API specification
+3. Test with the example requests in the documentation
+4. Contact support with:
+   - Complete error message
+   - Request parameters used
+   - Session ID (if applicable)
+   - Timestamp of the error

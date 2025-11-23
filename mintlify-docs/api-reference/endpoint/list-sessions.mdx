@@ -1,0 +1,315 @@
+---
+title: 'List Sessions'
+api: 'GET /bridge/sessions'
+description: 'Get a list of all active bridge sessions'
+---
+
+## Overview
+
+Retrieve a list of all bridge sessions currently stored in memory. This is useful for monitoring and debugging.
+
+<Warning>
+  Sessions are stored in-memory and will be lost if the server restarts. For production, implement persistent storage.
+</Warning>
+
+## Response
+
+<ResponseField name="totalSessions" type="number">
+  Total number of sessions in memory
+</ResponseField>
+
+<ResponseField name="sessions" type="array">
+  Array of session objects
+  <Expandable title="Session Object">
+    <ResponseField name="sessionId" type="string">
+      Unique session identifier
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Current status: `pending_deposit`, `processing`, `completed`, or `failed`
+    </ResponseField>
+    <ResponseField name="sourceChain" type="string">
+      Source blockchain network
+    </ResponseField>
+    <ResponseField name="destinationChain" type="string">
+      Destination blockchain network
+    </ResponseField>
+    <ResponseField name="amountUSDT" type="string">
+      Amount of USDT being bridged
+    </ResponseField>
+    <ResponseField name="destinationWallet" type="string">
+      Destination wallet address
+    </ResponseField>
+    <ResponseField name="depositAddress" type="string">
+      Smart wallet deposit address
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      ISO timestamp of session creation
+    </ResponseField>
+    <ResponseField name="txHash" type="string | undefined">
+      Transaction hash (only if completed)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+
+```bash cURL
+curl https://stable-flow-backend.onrender.com/bridge/sessions
+```
+
+```javascript JavaScript
+const response = await fetch('https://stable-flow-backend.onrender.com/bridge/sessions');
+const data = await response.json();
+console.log(`Total sessions: ${data.totalSessions}`);
+console.log('Sessions:', data.sessions);
+```
+
+```python Python
+import requests
+
+response = requests.get('https://stable-flow-backend.onrender.com/bridge/sessions')
+data = response.json()
+print(f"Total sessions: {data['totalSessions']}")
+print(f"Sessions: {data['sessions']}")
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Success Response
+{
+  "totalSessions": 3,
+  "sessions": [
+    {
+      "sessionId": "bridge_1737638400000_abc123",
+      "status": "completed",
+      "sourceChain": "base-sepolia",
+      "destinationChain": "sepolia",
+      "amountUSDT": "10",
+      "destinationWallet": "0x22890dfAeD0667723fcD66e34FfB853b4F81f6bd",
+      "depositAddress": "0x1234567890abcdef1234567890abcdef12345678",
+      "createdAt": "2025-01-23T10:30:00.000Z",
+      "txHash": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+    },
+    {
+      "sessionId": "bridge_1737638500000_def456",
+      "status": "processing",
+      "sourceChain": "sepolia",
+      "destinationChain": "base-sepolia",
+      "amountUSDT": "25",
+      "destinationWallet": "0x33890dfAeD0667723fcD66e34FfB853b4F81f6bd",
+      "depositAddress": "0x2345678901abcdef2345678901abcdef23456789",
+      "createdAt": "2025-01-23T10:35:00.000Z"
+    },
+    {
+      "sessionId": "bridge_1737638600000_ghi789",
+      "status": "pending_deposit",
+      "sourceChain": "base-sepolia",
+      "destinationChain": "sepolia",
+      "amountUSDT": "50",
+      "destinationWallet": "0x44890dfAeD0667723fcD66e34FfB853b4F81f6bd",
+      "depositAddress": "0x3456789012abcdef3456789012abcdef34567890",
+      "createdAt": "2025-01-23T10:40:00.000Z"
+    }
+  ]
+}
+```
+
+```json Empty Sessions
+{
+  "totalSessions": 0,
+  "sessions": []
+}
+```
+
+</ResponseExample>
+
+## Use Cases
+
+### Monitoring Dashboard
+
+Use this endpoint to build a monitoring dashboard:
+
+```javascript
+async function buildDashboard() {
+  const response = await fetch('https://stable-flow-backend.onrender.com/bridge/sessions');
+  const data = await response.json();
+  
+  const stats = {
+    total: data.totalSessions,
+    pending: data.sessions.filter(s => s.status === 'pending_deposit').length,
+    processing: data.sessions.filter(s => s.status === 'processing').length,
+    completed: data.sessions.filter(s => s.status === 'completed').length,
+    failed: data.sessions.filter(s => s.status === 'failed').length
+  };
+  
+  console.log('Bridge Statistics:', stats);
+  return stats;
+}
+```
+
+### Filtering Sessions
+
+Filter sessions by status or chain:
+
+```python
+import requests
+
+def get_sessions_by_status(status):
+    response = requests.get('https://stable-flow-backend.onrender.com/bridge/sessions')
+    data = response.json()
+    
+    filtered = [s for s in data['sessions'] if s['status'] == status]
+    return filtered
+
+# Get all pending sessions
+pending = get_sessions_by_status('pending_deposit')
+print(f"Pending sessions: {len(pending)}")
+
+# Get all completed sessions
+completed = get_sessions_by_status('completed')
+print(f"Completed sessions: {len(completed)}")
+```
+
+### Finding User Sessions
+
+Search for sessions by destination wallet:
+
+```javascript
+async function findUserSessions(walletAddress) {
+  const response = await fetch('https://stable-flow-backend.onrender.com/bridge/sessions');
+  const data = await response.json();
+  
+  return data.sessions.filter(
+    session => session.destinationWallet.toLowerCase() === walletAddress.toLowerCase()
+  );
+}
+
+const userSessions = await findUserSessions('0x22890dfAeD0667723fcD66e34FfB853b4F81f6bd');
+console.log(`Found ${userSessions.length} sessions for this wallet`);
+```
+
+## Session Statistics
+
+### Calculate Total Volume
+
+```javascript
+async function getTotalVolume() {
+  const response = await fetch('https://stable-flow-backend.onrender.com/bridge/sessions');
+  const data = await response.json();
+  
+  const totalVolume = data.sessions.reduce((sum, session) => {
+    return sum + parseFloat(session.amountUSDT);
+  }, 0);
+  
+  return {
+    totalSessions: data.totalSessions,
+    totalVolumeUSDT: totalVolume,
+    averageAmountUSDT: totalVolume / data.totalSessions || 0
+  };
+}
+```
+
+### Success Rate
+
+```javascript
+async function getSuccessRate() {
+  const response = await fetch('https://stable-flow-backend.onrender.com/bridge/sessions');
+  const data = await response.json();
+  
+  const completed = data.sessions.filter(s => s.status === 'completed').length;
+  const failed = data.sessions.filter(s => s.status === 'failed').length;
+  const total = completed + failed;
+  
+  return {
+    completed,
+    failed,
+    successRate: total > 0 ? (completed / total * 100).toFixed(2) + '%' : 'N/A'
+  };
+}
+```
+
+## Notes
+
+<Info>
+  This endpoint returns all sessions currently in memory. As sessions are never automatically cleaned up, the list will grow over time until the server restarts.
+</Info>
+
+<Tip>
+  For production use, consider implementing:
+  - Persistent storage (database)
+  - Session cleanup after completion
+  - Pagination for large result sets
+  - Filtering query parameters
+</Tip>
+
+## Performance Considerations
+
+- The response time increases with the number of sessions
+- Consider implementing pagination for production use
+- For large deployments, use a proper database instead of in-memory storage
+
+## Example Dashboard Implementation
+
+Here's a complete example of a simple monitoring dashboard:
+
+```javascript
+class BridgeDashboard {
+  constructor(apiUrl) {
+    this.apiUrl = apiUrl;
+  }
+  
+  async getStats() {
+    const response = await fetch(`${this.apiUrl}/bridge/sessions`);
+    const data = await response.json();
+    
+    return {
+      total: data.totalSessions,
+      byStatus: {
+        pending: data.sessions.filter(s => s.status === 'pending_deposit').length,
+        processing: data.sessions.filter(s => s.status === 'processing').length,
+        completed: data.sessions.filter(s => s.status === 'completed').length,
+        failed: data.sessions.filter(s => s.status === 'failed').length
+      },
+      byChain: {
+        'sepolia->base-sepolia': data.sessions.filter(
+          s => s.sourceChain === 'sepolia' && s.destinationChain === 'base-sepolia'
+        ).length,
+        'base-sepolia->sepolia': data.sessions.filter(
+          s => s.sourceChain === 'base-sepolia' && s.destinationChain === 'sepolia'
+        ).length
+      },
+      volume: {
+        total: data.sessions.reduce((sum, s) => sum + parseFloat(s.amountUSDT), 0),
+        average: data.sessions.reduce((sum, s) => sum + parseFloat(s.amountUSDT), 0) / data.totalSessions
+      },
+      recentSessions: data.sessions
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 10)
+    };
+  }
+  
+  async printStats() {
+    const stats = await this.getStats();
+    console.log('=== Bridge Dashboard ===');
+    console.log(`Total Sessions: ${stats.total}`);
+    console.log('\nBy Status:');
+    console.log(`  Pending: ${stats.byStatus.pending}`);
+    console.log(`  Processing: ${stats.byStatus.processing}`);
+    console.log(`  Completed: ${stats.byStatus.completed}`);
+    console.log(`  Failed: ${stats.byStatus.failed}`);
+    console.log('\nBy Route:');
+    console.log(`  Sepolia → Base Sepolia: ${stats.byChain['sepolia->base-sepolia']}`);
+    console.log(`  Base Sepolia → Sepolia: ${stats.byChain['base-sepolia->sepolia']}`);
+    console.log('\nVolume:');
+    console.log(`  Total: ${stats.volume.total.toFixed(2)} USDT`);
+    console.log(`  Average: ${stats.volume.average.toFixed(2)} USDT`);
+    console.log('\nRecent Sessions:', stats.recentSessions.length);
+  }
+}
+
+// Usage
+const dashboard = new BridgeDashboard('https://stable-flow-backend.onrender.com');
+await dashboard.printStats();
+```
