@@ -1,79 +1,80 @@
 {
-    "name": "Smart Wallet Bridge API",
-    "logo": {
-      "dark": "/logo/dark.svg",
-      "light": "/logo/light.svg"
-    },
-    "favicon": "/favicon.png",
-    "colors": {
-      "primary": "#ffffff",
-      "light": "#e5e5e5",
-      "dark": "#cccccc",
-      "anchors": {
-        "from": "#ffffff",
-        "to": "#e5e5e5"
-      }
-    },
-    "api": {
-      "baseUrl": "https://stable-flow-backend.onrender.com"
-    },
-    "topbarLinks": [
-      {
-        "name": "Support",
-        "url": "mailto:support@yourdomain.com"
-      }
-    ],
-    "topbarCtaButton": {
-      "name": "Dashboard",
-      "url": "https://yourdomain.com"
-    },
-    "tabs": [
-      {
-        "name": "API Reference",
-        "url": "api-reference"
-      }
-    ],
-    "navigation": [
-      {
-        "group": "Get Started",
-        "pages": [
-          "introduction",
-          "quickstart",
-          "development"
-        ]
-      },
-      {
-        "group": "API Documentation",
-        "pages": [
-          "api-reference/introduction",
-          "api-reference/authentication",
-          "api-reference/errors"
-        ]
-      },
-      {
-        "group": "Bridge Endpoints",
-        "pages": [
-          "api-reference/endpoint/create-bridge",
-          "api-reference/endpoint/get-status",
-          "api-reference/endpoint/list-sessions"
-        ]
-      },
-      {
-        "group": "Faucet Endpoints",
-        "pages": [
-          "api-reference/endpoint/request-usdt"
-        ]
-      },
-      {
-        "group": "Utility Endpoints",
-        "pages": [
-          "api-reference/endpoint/health-check"
-        ]
-      }
-    ],
-    "footerSocials": {
-      "twitter": "https://twitter.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://www.linkedin.com/company/mintsearch"
+  "name": "Smart Wallet Bridge API",
+  "theme": "mint",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#ffffff",
+    "light": "#e5e5e5",
+    "dark": "#cccccc",
+    "anchors": {
+      "from": "#ffffff",
+      "to": "#e5e5e5"
     }
+  },
+  "api": {
+    "baseUrl": "https://stable-flow-backend.onrender.com"
+  },
+  "topbarLinks": [
+    {
+      "name": "Support",
+      "url": "mailto:support@yourdomain.com"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Dashboard",
+    "url": "https://yourdomain.com"
+  },
+  "tabs": [
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Get Started",
+      "pages": [
+        "introduction",
+        "quickstart",
+        "development"
+      ]
+    },
+    {
+      "group": "API Documentation",
+      "pages": [
+        "api-reference/introduction",
+        "api-reference/authentication",
+        "api-reference/errors"
+      ]
+    },
+    {
+      "group": "Bridge Endpoints",
+      "pages": [
+        "api-reference/endpoint/create-bridge",
+        "api-reference/endpoint/get-status",
+        "api-reference/endpoint/list-sessions"
+      ]
+    },
+    {
+      "group": "Faucet Endpoints",
+      "pages": [
+        "api-reference/endpoint/request-usdt"
+      ]
+    },
+    {
+      "group": "Utility Endpoints",
+      "pages": [
+        "api-reference/endpoint/health-check"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/mintlify",
+    "github": "https://github.com/mintlify",
+    "linkedin": "https://www.linkedin.com/company/mintsearch"
   }
+}
