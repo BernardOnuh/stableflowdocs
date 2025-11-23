@@ -9,11 +9,7 @@
   "colors": {
     "primary": "#ffffff",
     "light": "#e5e5e5",
-    "dark": "#cccccc",
-    "anchors": {
-      "from": "#ffffff",
-      "to": "#e5e5e5"
-    }
+    "dark": "#cccccc"
   },
   "api": {
     "baseUrl": "https://stable-flow-backend.onrender.com"
@@ -34,44 +30,41 @@
       "url": "api-reference"
     }
   ],
-  "navigation": [
+  "anchors": [
     {
-      "group": "Get Started",
-      "pages": [
-        "introduction",
-        "quickstart",
-        "development"
-      ]
+      "name": "Documentation",
+      "icon": "book-open-cover",
+      "url": "https://mintlify.com/docs"
     },
     {
-      "group": "API Documentation",
-      "pages": [
-        "api-reference/introduction",
-        "api-reference/authentication",
-        "api-reference/errors"
-      ]
-    },
-    {
-      "group": "Bridge Endpoints",
-      "pages": [
-        "api-reference/endpoint/create-bridge",
-        "api-reference/endpoint/get-status",
-        "api-reference/endpoint/list-sessions"
-      ]
-    },
-    {
-      "group": "Faucet Endpoints",
-      "pages": [
-        "api-reference/endpoint/request-usdt"
-      ]
-    },
-    {
-      "group": "Utility Endpoints",
-      "pages": [
-        "api-reference/endpoint/health-check"
-      ]
+      "name": "Community",
+      "icon": "slack",
+      "url": "https://mintlify.com/community"
     }
   ],
+  "navigation": {
+    "Get Started": [
+      "introduction",
+      "quickstart",
+      "development"
+    ],
+    "API Documentation": [
+      "api-reference/introduction",
+      "api-reference/authentication",
+      "api-reference/errors"
+    ],
+    "Bridge Endpoints": [
+      "api-reference/endpoint/create-bridge",
+      "api-reference/endpoint/get-status",
+      "api-reference/endpoint/list-sessions"
+    ],
+    "Faucet Endpoints": [
+      "api-reference/endpoint/request-usdt"
+    ],
+    "Utility Endpoints": [
+      "api-reference/endpoint/health-check"
+    ]
+  },
   "footerSocials": {
     "twitter": "https://twitter.com/mintlify",
     "github": "https://github.com/mintlify",
