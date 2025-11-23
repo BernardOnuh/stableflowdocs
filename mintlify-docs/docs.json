@@ -24,22 +24,11 @@
     "name": "Dashboard",
     "url": "https://yourdomain.com"
   },
-  "tabs": [
-    {
-      "name": "API Reference",
-      "url": "api-reference"
-    }
-  ],
   "anchors": [
     {
       "name": "Documentation",
       "icon": "book-open-cover",
       "url": "https://mintlify.com/docs"
-    },
-    {
-      "name": "Community",
-      "icon": "slack",
-      "url": "https://mintlify.com/community"
     }
   ],
   "navigation": [
@@ -60,29 +49,18 @@
       ]
     },
     {
-      "group": "Bridge Endpoints",
+      "group": "Endpoints",
       "pages": [
         "api-reference/endpoint/create-bridge",
         "api-reference/endpoint/get-status",
-        "api-reference/endpoint/list-sessions"
-      ]
-    },
-    {
-      "group": "Faucet Endpoints",
-      "pages": [
-        "api-reference/endpoint/request-usdt"
-      ]
-    },
-    {
-      "group": "Utility Endpoints",
-      "pages": [
+        "api-reference/endpoint/list-sessions",
+        "api-reference/endpoint/request-usdt",
         "api-reference/endpoint/health-check"
       ]
     }
   ],
   "footerSocials": {
     "twitter": "https://twitter.com/mintlify",
-    "github": "https://github.com/mintlify",
-    "linkedin": "https://www.linkedin.com/company/mintsearch"
+    "github": "https://github.com/mintlify"
   }
 }
