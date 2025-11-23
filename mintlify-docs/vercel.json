@@ -1,5 +1,6 @@
 {
-    "buildCommand": "npm install -g mintlify && mintlify build",
-    "outputDirectory": ".mintlify",
-    "installCommand": "npm install -g mintlify"
+    "buildCommand": "npm install -g mintlify",
+    "devCommand": "mintlify dev",
+    "installCommand": "echo 'Installing Mintlify'",
+    "framework": null
   }
