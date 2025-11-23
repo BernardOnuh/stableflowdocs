@@ -9,7 +9,6 @@
   },
   "favicon": "/favicon.png",
   "api": {
-    "baseUrl": "https://stable-flow-backend.onrender.com"
   },
   "navigation": {
     "tabs": [
