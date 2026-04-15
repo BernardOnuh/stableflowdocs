@@ -137,7 +137,6 @@ passport.use(new OAuth2Strategy({
   }
 ));
 ```
-
 <AccordionGroup>
   <Accordion title="Pros" icon="thumbs-up">
     - Industry standard
@@ -184,7 +183,6 @@ async function verifyWalletSignature(req, res, next) {
   next();
 }
 ```
-
 **Usage:**
 ```javascript
 // Client-side: Sign message with wallet
@@ -203,7 +201,6 @@ await fetch('https://stable-flow-backend.onrender.com/bridge/create', {
   })
 });
 ```
-
 <AccordionGroup>
   <Accordion title="Pros" icon="thumbs-up">
     - No passwords needed
@@ -266,7 +263,6 @@ app.use(cors({
   credentials: true
 }));
 ```
-
 ## Security Headers
 
 Add security headers using Helmet:
