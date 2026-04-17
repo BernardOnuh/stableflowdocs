@@ -21,11 +21,13 @@ Retrieve the current status and details of a bridge session.
 </ResponseField>
 
 <ResponseField name="status" type="string">
+
   Current status of the bridge:
   - `pending_deposit`: Waiting for USDT deposit
   - `processing`: USDT received, executing bridge
   - `completed`: Bridge successful
   - `failed`: Bridge failed (check error field)
+
 </ResponseField>
 
 <ResponseField name="sourceChain" type="string">
@@ -230,7 +232,6 @@ async function waitForCompletion(sessionId, maxWaitTime = 1200000) {
     // Wait before next poll
     await new Promise(resolve => setTimeout(resolve, 10000)); // 10 seconds
   }
-  
   throw new Error('Timeout waiting for bridge completion');
 }
 ```
