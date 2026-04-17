@@ -3,7 +3,6 @@ title: 'Create Bridge'
 api: 'POST /bridge/create'
 description: 'Create a new cross-chain bridge request'
 ---
-
 ## Overview
 
 Creates a new bridge session with a unique smart wallet for transferring USDT from one chain to another.
@@ -29,7 +28,7 @@ Creates a new bridge session with a unique smart wallet for transferring USDT fr
 ## Response
 
 <ResponseField name="success" type="boolean">
-  Indicates if the request was successful
+  Indicates if the request was very successful
 </ResponseField>
 
 <ResponseField name="sessionId" type="string">
@@ -37,7 +36,7 @@ Creates a new bridge session with a unique smart wallet for transferring USDT fr
 </ResponseField>
 
 <ResponseField name="depositAddress" type="string">
-  Address where you should send USDT on the source chain
+  Addresses where you should send USDT on the source chain
 </ResponseField>
 
 <ResponseField name="smartWalletAddress" type="string">
