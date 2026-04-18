@@ -15,11 +15,11 @@ Request testnet USDC to be sent to any address on Sepolia or Base Sepolia. Usefu
 ## Request Body
 
 <ParamField body="address" type="string" required>
-  The wallet address that will receive USDT. Must be a valid Ethereum address.
+  The wallet address that will receive USDT/USDC. Must be a valid Ethereum address.
 </ParamField>
 
 <ParamField body="chain" type="string" required>
-  The blockchain network where USDT will be sent. Must be either `sepolia` or `base-sepolia`.
+  The blockchain network where USDT/USDC will be sent. Must be either `sepolia` or `base-sepolia`.
 </ParamField>
 
 <ParamField body="amount" type="string" default="10">
@@ -49,7 +49,7 @@ Request testnet USDC to be sent to any address on Sepolia or Base Sepolia. Usefu
 </ResponseField>
 
 <ResponseField name="usdtToken" type="string">
-  Address of the USDT token contract
+  Address of the USDT/USDC token contract
 </ResponseField>
 
 <ResponseField name="explorerUrl" type="string">
