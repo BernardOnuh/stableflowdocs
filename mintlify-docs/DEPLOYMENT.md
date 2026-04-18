@@ -65,7 +65,6 @@ npm install -g mintlify
 # Build the docs
 mintlify build
 ```
-
 ### Deploy Build Output
 
 The built files will be in `.mintlify/` directory. You can deploy this to:
@@ -88,7 +87,6 @@ mintlify dev
 
 # Visit http://localhost:3000
 ```
-
 ---
 
 ## Environment Variables (if needed)
