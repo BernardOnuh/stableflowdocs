@@ -13,6 +13,6 @@ Professional, production-ready API documentation for your Smart Wallet Bridge AP
 - ✅ Ready for Vercel deployment
 - ✅ Mobile-responsive design
 - ✅ Built-in search functionality
-- ✅ Dark mode support
+- ✅ Dark/Light mode support
 
 ## 📁 File Structure
