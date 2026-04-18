@@ -20,12 +20,12 @@
     "topbarLinks": [
       {
         "name": "Support",
-        "url": "mailto:support@yourdomain.com"
+        "url": "mailto:support@stableflowr.com"
       }
     ],
     "topbarCtaButton": {
       "name": "Dashboard",
-      "url": "https://yourdomain.com"
+      "url": "https://stableflowr.com"
     },
     "tabs": [
       {
